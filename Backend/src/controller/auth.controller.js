@@ -46,7 +46,8 @@ async function Register(req, res) {
     res.cookie("token", token);
 
     res.status(201).json({
-      message: "User Register Successfully",
+      "message": "User Register Successfully",
+      "userData" : newUser
     });
   } catch (error) {
     console.log(error);
@@ -96,10 +97,10 @@ async function Login(req, res) {
     res.cookie("token", token);
     const user = checkEmail.toObject();
     delete user.password;
+    console.log("User Login Successfully");
     res.status(200).json({
       message: "User Login Successfully",
       userData: user,
-      token,
     });
   } catch (error) {
     console.log(error);
@@ -173,6 +174,7 @@ async function GetMe(req, res) {
     res.status(200).json({
       message: "User Data Found",
       userData: findUser,
+      userToken: req.user,
     });
   } catch (error) {
     console.log(error);
@@ -181,4 +183,5 @@ async function GetMe(req, res) {
     });
   }
 }
+
 export { Register, Login, Logout, GetMe };

@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 
 function Navbar() {
   return (
-    <div className="flex justify-between items-center p-10">
+    <div className="flex justify-between items-center py-3 px-20 bg-gray-100">
       <h1 className="text-2xl font-extrabold">Resume Builder</h1>
       <div className="pages flex gap-3 items-center">
         <NavLink
