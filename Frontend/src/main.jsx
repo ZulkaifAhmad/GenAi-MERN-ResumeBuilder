@@ -7,12 +7,13 @@ import Login from "./features/auth/Login.jsx";
 import Layout from "./features/pages/Layout.jsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import ProtectedRoute from "./features/components/Protected.jsx";
+import UserProvider from "./features/auth/services/auth.context.jsx";
 
 const router = createBrowserRouter([
   {
-    path : "/",
-    element : <ProtectedRoute />,
-    children : [
+    path: "/",
+    element: <ProtectedRoute />,
+    children: [
       {
         element: <Layout />,
         children: [
@@ -22,8 +23,8 @@ const router = createBrowserRouter([
           },
         ],
       },
-    ]
-  } ,
+    ],
+  },
   {
     path: "/login",
     element: <Login />,
@@ -36,6 +37,8 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById("root")).render(
   // <StrictMode>
+  <UserProvider>
     <RouterProvider router={router} />
+  </UserProvider>,
   // </StrictMode>,
 );
