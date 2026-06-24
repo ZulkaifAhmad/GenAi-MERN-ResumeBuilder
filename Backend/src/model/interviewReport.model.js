@@ -60,3 +60,5 @@ const interviewReportSchema = new mongoose.Schema(
 );
 
 const Interview = mongoose.model("interview", interviewReportSchema);
+
+export default Interview ;

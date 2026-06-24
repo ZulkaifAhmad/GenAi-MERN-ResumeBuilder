@@ -1,178 +1,131 @@
 import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema"; // npm install zod-to-json-schema
+
+// ─── 1. SCHEMA ────────────────────────────────────────────────────────────────
+// Zod schema defines the exact shape of the JSON we expect from Gemini.
+// If the response doesn't match this shape, Zod throws an error.
 
 export const interviewReportSchema = z.object({
-  skillGaps: z
-    .array(
-      z.object({
-        skills: z
-          .string()
-          .describe("Name of the missing or weak skill in the candidate"),
-        severity: z
-          .enum(["low", "medium", "high"])
-          .describe("How serious the skill gap is"),
-      }),
-    )
-    .describe("List of skills where candidate is weak or missing knowledge"),
+  // Array of weak/missing skills
+  skillGaps: z.array(
+    z.object({
+      skills: z.string(), // e.g. "Docker"
+      severity: z.enum(["low", "medium", "high"]), // how serious
+    }),
+  ),
 
-  technicalQuestions: z
-    .array(
-      z.object({
-        question: z
-          .string()
-          .describe("Technical interview question based on job role"),
-        intention: z
-          .string()
-          .describe("Why this question is being asked in interview"),
-        answer: z.string().describe("Expected or ideal answer to the question"),
-      }),
-    )
-    .describe("Technical interview questions with answers and purpose"),
+  // Technical questions with why they're asked + ideal answers
+  technicalQuestions: z.array(
+    z.object({
+      question: z.string(),
+      intention: z.string(), // why the interviewer asks this
+      answer: z.string(), // what a good answer looks like
+    }),
+  ),
 
-  behaviouralQuestions: z
-    .array(
-      z.object({
-        question: z
-          .string()
-          .describe("Behavioural or situational interview question"),
-        intention: z.string().describe("Purpose of this behavioural question"),
-        answer: z
-          .string()
-          .describe("Ideal response for the behavioural question"),
-      }),
-    )
-    .describe("Behavioural interview questions and expected answers"),
+  // Behavioural questions (e.g. "Tell me about a time...")
+  behaviouralQuestions: z.array(
+    z.object({
+      question: z.string(),
+      intention: z.string(),
+      answer: z.string(),
+    }),
+  ),
 
-  preparationPlan: z
-    .array(
-      z.object({
-        day: z
-          .number()
-          .describe("Day number in preparation plan (e.g. Day 1, Day 2)"),
-        focus: z
-          .string()
-          .describe("Main topic or skill to focus on for that day"),
-        tasks: z
-          .string()
-          .describe("Specific tasks or practice activities for that day"),
-      }),
-    )
-    .describe("Step-by-step preparation plan for interview readiness"),
+  // A day-by-day study plan to prepare for the interview
+  preparationPlan: z.array(
+    z.object({
+      day: z.number(), // Day 1, Day 2, etc.
+      focus: z.string(), // main topic for the day
+      tasks: z.string(), // what to actually do
+    }),
+  ),
 
-  matchScore: z
-    .number()
-    .min(0)
-    .max(100)
-    .describe("Overall match score between resume and job description (0–100)"),
+  // 0–100 score: how well does the resume match the job description?
+  matchScore: z.number().min(0).max(100),
 });
 
-const client = new GoogleGenAI({
-  apiKey: process.env.GOOGLE_GEN_AI,
-});
+// ─── 2. GEMINI CLIENT ─────────────────────────────────────────────────────────
+const client = new GoogleGenAI({ apiKey: process.env.GOOGLE_GEN_AI });
 
-// async function interviewReport({ resume, jobDescription, selfDescription }) {
-//   const prompt = `Generate the Interview Report for the candidate with the following details 
-//     resume: ${resume}, job-description: ${jobDescription}, self-description: ${selfDescription}
-//   `;
-
-//   const response = await client.models.generateContent({
-//     model: "gemini-2.5-flash", // try this
-//     contents: prompt,
-//     config: {
-//       responseMimeType: "application/json",
-//       responseSchema: zodToJsonSchema(interviewReportSchema),
-//     },
-//   });
-
-//   const rawJson = response.text;
-//   const report = interviewReportSchema.parse(JSON.parse(rawJson));
-//   console.log(report);
-
-//   return report;
-// }
-
+// ─── 3. MAIN FUNCTION ─────────────────────────────────────────────────────────
 async function interviewReport({ resume, jobDescription, selfDescription }) {
+  // Build the prompt — we tell Gemini exactly what we want and the JSON format
   const prompt = `You are an expert interview coach. Analyze the candidate's resume against the job description and generate a detailed interview report.
 
-Resume:
-${resume}
+Resume: ${resume}
+Job Description: ${jobDescription}
+Self Description: ${selfDescription}
 
-Job Description:
-${jobDescription}
-
-Self Description:
-${selfDescription}
-
-Return ONLY a valid JSON object with exactly this structure (no markdown, no backticks, no explanation):
+Return ONLY a valid JSON object with no markdown, no backticks, no explanation:
 {
-  "skillGaps": [
-    { "skills": "skill name", "severity": "low" | "medium" | "high" }
-  ],
-  "technicalQuestions": [
-    { "question": "question text", "intention": "why this is asked", "answer": "ideal answer" }
-  ],
-  "behaviouralQuestions": [
-    { "question": "question text", "intention": "why this is asked", "answer": "ideal answer" }
-  ],
-  "preparationPlan": [
-    { "day": 1, "focus": "topic to focus on", "tasks": "specific tasks to do" }
-  ],
+  "skillGaps":            [{ "skills": "...", "severity": "low|medium|high" }],
+  "technicalQuestions":   [{ "question": "...", "intention": "...", "answer": "..." }],
+  "behaviouralQuestions": [{ "question": "...", "intention": "...", "answer": "..." }],
+  "preparationPlan":      [{ "day": 1, "focus": "...", "tasks": "..." }],
   "matchScore": 70
 }
 
 Rules:
-- skillGaps: list at least 5 real skill gaps based on the job requirements
-- technicalQuestions: provide exactly 5 technical questions
-- behaviouralQuestions: provide exactly 3 behavioural questions  
-- preparationPlan: provide a 7-day plan
-- matchScore: integer from 0 to 100
-- Every array item must be a complete object, never null
+- skillGaps: at least 5 gaps based on the job description
+- technicalQuestions: exactly 5
+- behaviouralQuestions: exactly 3
+- preparationPlan: 7 days
+- matchScore: integer 0–100
+- No null values in any array
 `;
 
+  // Retry config — Gemini sometimes returns 429 (quota) or 503 (overload)
   const MAX_RETRIES = 5;
-  const RETRY_DELAY_MS = 10000;
+  const BASE_DELAY_MS = 10000; // 10 seconds, multiplied by attempt number
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       console.log(`Attempt ${attempt}/${MAX_RETRIES}...`);
 
+      // Call Gemini API
       const response = await client.models.generateContent({
         model: "gemini-2.5-flash",
         contents: prompt,
         config: {
-          responseMimeType: "application/json", // keep this, drop responseSchema
-          temperature: 0.3,
+          responseMimeType: "application/json", // ask for JSON response
+          temperature: 0.3, // lower = more consistent output
         },
       });
 
-      let rawJson = response.text;
+      // Clean the response (strip markdown fences if Gemini adds them anyway)
+      const rawJson = response.text
+        .replace(/```json\s*/gi, "")
+        .replace(/```\s*/gi, "")
+        .trim();
 
-      // strip markdown fences just in case
-      rawJson = rawJson.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
-
+      // Parse the JSON string into a JS object
       const parsed = JSON.parse(rawJson);
 
-      // filter out any null items from arrays defensively
-      if (parsed.skillGaps) parsed.skillGaps = parsed.skillGaps.filter(Boolean);
-      if (parsed.technicalQuestions) parsed.technicalQuestions = parsed.technicalQuestions.filter(Boolean);
-      if (parsed.behaviouralQuestions) parsed.behaviouralQuestions = parsed.behaviouralQuestions.filter(Boolean);
-      if (parsed.preparationPlan) parsed.preparationPlan = parsed.preparationPlan.filter(Boolean);
+      // Remove any null items from arrays (safety net)
+      parsed.skillGaps = parsed.skillGaps?.filter(Boolean) ?? [];
+      parsed.technicalQuestions =
+        parsed.technicalQuestions?.filter(Boolean) ?? [];
+      parsed.behaviouralQuestions =
+        parsed.behaviouralQuestions?.filter(Boolean) ?? [];
+      parsed.preparationPlan = parsed.preparationPlan?.filter(Boolean) ?? [];
 
+      // Validate the shape with Zod — throws if anything is missing or wrong type
       const report = interviewReportSchema.parse(parsed);
+      console.log(report);
       console.log("Report generated successfully!");
-      console.log(report)
       return report;
-
     } catch (error) {
       const isRetryable = error.status === 429 || error.status === 503;
 
       if (isRetryable && attempt < MAX_RETRIES) {
-        const waitTime = RETRY_DELAY_MS * attempt;
-        console.log(`Error ${error.status}. Retrying in ${waitTime / 1000}s...`);
-        await new Promise((resolve) => setTimeout(resolve, waitTime));
+        // Wait longer each retry: 10s, 20s, 30s...
+        const wait = BASE_DELAY_MS * attempt;
+        console.log(`Error ${error.status}. Retrying in ${wait / 1000}s...`);
+        await new Promise((resolve) => setTimeout(resolve, wait));
       } else {
-        console.error(`Failed after ${attempt} attempts.`);
+        // Non-retryable error or ran out of attempts — throw to caller
+        console.error(`Failed after ${attempt} attempt(s):`, error.message);
         throw error;
       }
     }

@@ -11,7 +11,7 @@ import {
 const { PORT, MONGODB_URI } = process.env;
 
 dbConnect(MONGODB_URI);
-interviewReport({ resume, selfDescription, jobDescription });
+// interviewReport({ resume, selfDescription, jobDescription });
 
 app.listen(PORT, () => {
   console.log(`server is running on port ${PORT}`);
