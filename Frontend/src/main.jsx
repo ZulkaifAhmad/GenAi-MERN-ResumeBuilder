@@ -8,6 +8,7 @@ import Layout from "./features/pages/Layout.jsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import ProtectedRoute from "./features/components/Protected.jsx";
 import UserProvider from "./features/auth/services/auth.context.jsx";
+import InterviewCoachDashboard from "./features/pages/Report.jsx";
 
 const router = createBrowserRouter([
   {
@@ -15,12 +16,17 @@ const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       {
+        path: "/",
         element: <Layout />,
         children: [
           {
             index: true,
             element: <App />,
           },
+          {
+            path : "/report" ,
+            element : <InterviewCoachDashboard />
+          }
         ],
       },
     ],

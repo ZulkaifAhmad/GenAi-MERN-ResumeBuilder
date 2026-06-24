@@ -51,28 +51,38 @@ const client = new GoogleGenAI({ apiKey: process.env.GOOGLE_GEN_AI });
 // ─── 3. MAIN FUNCTION ─────────────────────────────────────────────────────────
 async function interviewReport({ resume, jobDescription, selfDescription }) {
   // Build the prompt — we tell Gemini exactly what we want and the JSON format
-  const prompt = `You are an expert interview coach. Analyze the candidate's resume against the job description and generate a detailed interview report.
+  const prompt = `
+You are an expert interview coach.
+
+Analyze the candidate and return ONLY valid JSON.
+
+STRICT RULES:
+- Do NOT add explanation
+- Do NOT add markdown
+- Do NOT add backticks
+- Output must be valid JSON
+- Follow schema exactly
+
+Schema:
+{
+  "skillGaps": [{ "skills": "string", "severity": "low|medium|high" }],
+  "technicalQuestions": [{ "question": "string", "intention": "string", "answer": "string" }],
+  "behaviouralQuestions": [{ "question": "string", "intention": "string", "answer": "string" }],
+  "preparationPlan": [{ "day": number, "focus": "string", "tasks": "string" }],
+  "matchScore": number
+}
+
+Rules:
+- skillGaps: at least 5
+- technicalQuestions: exactly 5
+- behaviouralQuestions: exactly 3
+- preparationPlan: exactly 7 days
+- matchScore: 0–100 integer
+- No null values
 
 Resume: ${resume}
 Job Description: ${jobDescription}
 Self Description: ${selfDescription}
-
-Return ONLY a valid JSON object with no markdown, no backticks, no explanation:
-{
-  "skillGaps":            [{ "skills": "...", "severity": "low|medium|high" }],
-  "technicalQuestions":   [{ "question": "...", "intention": "...", "answer": "..." }],
-  "behaviouralQuestions": [{ "question": "...", "intention": "...", "answer": "..." }],
-  "preparationPlan":      [{ "day": 1, "focus": "...", "tasks": "..." }],
-  "matchScore": 70
-}
-
-Rules:
-- skillGaps: at least 5 gaps based on the job description
-- technicalQuestions: exactly 5
-- behaviouralQuestions: exactly 3
-- preparationPlan: 7 days
-- matchScore: integer 0–100
-- No null values in any array
 `;
 
   // Retry config — Gemini sometimes returns 429 (quota) or 503 (overload)
@@ -85,7 +95,7 @@ Rules:
 
       // Call Gemini API
       const response = await client.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.5-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json", // ask for JSON response
