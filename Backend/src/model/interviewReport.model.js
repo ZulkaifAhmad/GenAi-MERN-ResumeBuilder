@@ -2,18 +2,30 @@ import mongoose from "mongoose";
 
 const interviewReportSchema = new mongoose.Schema(
   {
+    user : {
+      type : mongoose.Schema.Types.ObjectId ,
+      ref : "users"
+    } ,
     jobDescription: {
       type: String,
-      required: [true, "self desciption is required"],
+      required: [true, "job description is required"],
     },
 
-    resume: String,
+    resume: {
+      type: String,
+      required: [true, "resume is required"],
+    },
 
-    selfDescription: String,
+    selfDescription: {
+      type: String,
+    },
 
     skillGaps: [
       {
-        skills: String,
+        _id : false ,
+        skills: {
+          type: String,
+        },
         severity: {
           type: String,
           enum: ["low", "medium", "high"],
@@ -24,41 +36,61 @@ const interviewReportSchema = new mongoose.Schema(
 
     technicalQuestions: [
       {
-        question: String,
-        intention: String,
-        answer: String,
-        required: true,
+        _id : false ,
+        question: {
+          type: String,
+          required: true,
+        },
+        intention: {
+          type: String,
+        },
+        answer: {
+          type: String,
+        },
       },
     ],
 
     behaviourialQuestions: [
       {
-        question: String,
-        intention: String,
-        answer: String,
-        required: true,
+        _id : false ,
+        question: {
+          type: String,
+          required: true,
+        },
+        intention: {
+          type: String,
+        },
+        answer: {
+          type: String,
+        },
       },
     ],
 
     preparationPlan: [
       {
-        day: Number,
-        focus: String,
-        tasks: String,
-        required: true,
+        _id : false,
+        day: {
+          type: Number,
+          required: true,
+        },
+        focus: {
+          type: String,
+        },
+        tasks: {
+          type: String,
+        },
       },
     ],
-    matchScore: [
-      {
-        type: Number,
-        min: 0,
-        max: 100,
-      },
-    ],
+
+    matchScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
   },
   { timestamps: true },
 );
 
 const Interview = mongoose.model("interview", interviewReportSchema);
 
-export default Interview ;
+export default Interview;

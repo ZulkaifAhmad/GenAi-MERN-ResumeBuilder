@@ -1,6 +1,7 @@
 import express from "express";
 import { InterviewAiReportController } from "../controller/aiReport.controller.js";
 import { Protected } from "../middleware/auth.middleware.js";
+import upload from "../middleware/multer.js";
 
 const interviewReportRouter = express.Router();
 
@@ -14,7 +15,9 @@ const interviewReportRouter = express.Router();
 interviewReportRouter.post(
   "/ai-report",
   Protected,
+  upload.single("resume"),
   InterviewAiReportController,
 );
+
 
 export default interviewReportRouter;
