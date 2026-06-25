@@ -45,7 +45,7 @@ function Navbar() {
                 Home
               </NavLink>
               <NavLink to="/report" className={navLinkClass}>
-                Report
+                My Reports
               </NavLink>
             </div>
           </div>

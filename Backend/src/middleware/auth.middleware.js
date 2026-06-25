@@ -1,13 +1,6 @@
 import jwt from "jsonwebtoken";
 import BlockList from "../model/blockList.model.js";
 
-/**
- * @description Authentication middleware (Protected Route)Checks if user has a valid JWT (JSON Web Token). If valid, allows access to the next route. If invalid or missing, returns an unauthorized response.
- * @param {object} express req object (expect token in cookies)
- * @param {object} express res object
- * @param {function} next - next the middlware function
- */
-
 async function Protected(req, res, next) {
   try {
     const token = req.cookies.token;

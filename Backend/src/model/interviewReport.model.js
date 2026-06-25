@@ -13,7 +13,6 @@ const interviewReportSchema = new mongoose.Schema(
 
     resume: {
       type: String,
-      required: [true, "resume is required"],
     },
 
     selfDescription: {
@@ -50,7 +49,7 @@ const interviewReportSchema = new mongoose.Schema(
       },
     ],
 
-    behaviourialQuestions: [
+    behaviouralQuestions: [
       {
         _id : false ,
         question: {

@@ -1,40 +1,74 @@
-import { useActionState, useRef } from "react";
-
-async function submitAction(_prevState, formData) {
-  try {
-    const jobDescription = formData.get("jobDescription");
-    const selfDescription = formData.get("selfDescription");
-    const resume = formData.get("resume");
-  
-    if (!jobDescription?.trim()) {
-      return { error: "Job description is required." };
-    }
-  
-    if ((!resume || resume.size === 0) && !selfDescription?.trim()) {
-      return { error: "Please upload a resume or fill in the self-description." };
-    }
-  
-    if (resume && resume.size > 0) {
-      if (resume.type !== "application/pdf") {
-        return { error: "Only PDF files are allowed." };
-      }
-      if (resume.size > 3 * 1024 * 1024) {
-        return { error: "File size must be under 3MB." };
-      }
-    }
-  
-    // TODO: call your Gemini API here
-    console.log(jobDescription , selfDescription , resume);
-    return { success: true };
-  } catch (error) {
-    console.log(error);
-    return { error : true}
-  }
-}
+import { useActionState, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { GenerateReportApi } from "./features/auth/services/report.api.js";
 
 export default function InterviewPage() {
-  const [state, formAction, isPending] = useActionState(submitAction, null);
+  const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const [fileName, setFileName] = useState("");
+
+  async function submitAction(_prevState, formData) {
+    try {
+      const jobDescription = formData.get("jobDescription");
+      const selfDescription = formData.get("selfDescription");
+      const resume = formData.get("resume");
+
+      if (!jobDescription?.trim()) {
+        return { error: "Job description is required." };
+      }
+
+      if ((!resume || resume.size === 0) && !selfDescription?.trim()) {
+        return { error: "Please upload a resume or fill in the self-description." };
+      }
+
+      if (resume && resume.size > 0) {
+        if (resume.type !== "application/pdf") {
+          return { error: "Only PDF files are allowed." };
+        }
+        if (resume.size > 3 * 1024 * 1024) {
+          return { error: "File size must be under 3MB." };
+        }
+      }
+
+      // Build FormData for multipart upload
+      const payload = new FormData();
+      payload.append("jobDescription", jobDescription);
+      if (selfDescription?.trim()) {
+        payload.append("selfDescription", selfDescription);
+      }
+      if (resume && resume.size > 0) {
+        payload.append("resume", resume);
+      }
+
+      const data = await GenerateReportApi(payload);
+
+      // Navigate to the newly created report
+      if (data?.save?._id) {
+        navigate(`/report/${data.save._id}`, { state: { report: data.save } });
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.log(error);
+      const message =
+        error.response?.data?.message || "Something went wrong. Please try again.";
+      return { error: message };
+    }
+  }
+
+  const [state, formAction, isPending] = useActionState(submitAction, null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    setFileName(file ? file.name : "");
+  };
+
+  const clearFile = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    setFileName("");
+  };
 
   return (
     <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center px-4 py-12">
@@ -86,10 +120,31 @@ export default function InterviewPage() {
                 onClick={() => fileInputRef.current?.click()}
                 className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-xl py-10 cursor-pointer hover:border-black transition-colors bg-gray-50"
               >
-                <p className="text-sm text-gray-700 font-medium">
-                  Click to upload or drag & drop
-                </p>
-                <p className="text-xs text-gray-400">PDF only · Max 3MB</p>
+                {fileName ? (
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-sm text-gray-800 font-medium">{fileName}</p>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        clearFile();
+                      }}
+                      className="ml-2 text-xs text-red-500 hover:text-red-700 font-bold border border-red-200 rounded px-2 py-0.5 hover:bg-red-50 transition-colors"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-700 font-medium">
+                      Click to upload or drag & drop
+                    </p>
+                    <p className="text-xs text-gray-400">PDF only · Max 3MB</p>
+                  </>
+                )}
               </div>
 
               <input
@@ -97,6 +152,7 @@ export default function InterviewPage() {
                 type="file"
                 name="resume"
                 accept=".pdf"
+                onChange={handleFileChange}
                 className="hidden"
               />
             </div>
@@ -145,9 +201,19 @@ export default function InterviewPage() {
             <button
               type="submit"
               disabled={isPending}
-              className="bg-black hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold px-6 py-3 rounded-xl transition-colors"
+              className="bg-black hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold px-6 py-3 rounded-xl transition-colors flex items-center gap-2"
             >
-              {isPending ? "Generating..." : "Generate My Interview Strategy"}
+              {isPending ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Generating...
+                </>
+              ) : (
+                "Generate My Interview Strategy"
+              )}
             </button>
           </div>
         </div>

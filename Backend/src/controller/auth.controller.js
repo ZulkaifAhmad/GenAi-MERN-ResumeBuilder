@@ -1,18 +1,6 @@
-import mongoose from "mongoose";
 import User from "../model/user.model.js";
 import jwt from "jsonwebtoken";
 import BlockList from "../model/blockList.model.js";
-
-/**
- * Register a new user
- * @route POST /api/auth/register
- * @access public
- *
- * @body {string} username - required , unique
- * @body {string} email - required , unique
- * @body {string} password - required
-
- */
 
 async function Register(req, res) {
   try {
@@ -57,14 +45,6 @@ async function Register(req, res) {
     });
   }
 }
-
-/**
- *
- * @access public
- * @route POST - /api/auth/login
- * @body {email} required
- * @body {password} required
- */
 
 async function Login(req, res) {
   try {
@@ -111,12 +91,6 @@ async function Login(req, res) {
   }
 }
 
-/**
- * @route POST  /api/auth/logout
- * @description  user Token will be clear from cookies and blocklisted
- * @access  public
- */
-
 async function Logout(req, res) {
   try {
     const token = req.cookies.token;
@@ -151,13 +125,6 @@ async function Logout(req, res) {
     });
   }
 }
-
-/**
- * @route GET - /api/auth/getme
- * @access private
- * @param {object} express req object (expects userId from middlware if logedIn)
- * @description if user have correct token then user can fetch his data from database
- */
 
 async function GetMe(req, res) {
   try {

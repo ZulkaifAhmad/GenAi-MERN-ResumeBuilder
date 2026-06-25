@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useActionState } from "react";
 import { Link } from "react-router-dom";
 import { LoginApi } from "./services/auth.api.js";

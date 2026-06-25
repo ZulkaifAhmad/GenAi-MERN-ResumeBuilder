@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -69,7 +67,6 @@ function Signup() {
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
-          {/* Username */}
           <div>
             <label className="text-sm font-medium text-gray-700">
               Username
@@ -90,7 +87,6 @@ function Signup() {
             )}
           </div>
 
-          {/* Email */}
           <div>
             <label className="text-sm font-medium text-gray-700">Email</label>
             <input
@@ -109,7 +105,6 @@ function Signup() {
             )}
           </div>
 
-          {/* Password */}
           <div>
             <label className="text-sm font-medium text-gray-700">
               Password
@@ -130,7 +125,6 @@ function Signup() {
             )}
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={isPending}
@@ -141,14 +135,12 @@ function Signup() {
            {isPending ? "Signing up..." : "Signup"}
           </button>
 
-          {/* Server message */}
           {serverMessage && (
             <p className="text-center text-sm text-red-500 mt-2">
               {serverMessage}
             </p>
           )}
 
-          {/* Sign up link */}
           <div className="text-center text-sm text-gray-600 mt-4">
             Already have an account?{" "}
             <Link

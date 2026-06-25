@@ -9,6 +9,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import ProtectedRoute from "./features/components/Protected.jsx";
 import UserProvider from "./features/auth/services/auth.context.jsx";
 import InterviewCoachDashboard from "./features/pages/Report.jsx";
+import ReportsList from "./features/pages/ReportsList.jsx";
 
 const router = createBrowserRouter([
   {
@@ -24,9 +25,13 @@ const router = createBrowserRouter([
             element: <App />,
           },
           {
-            path : "/report" ,
-            element : <InterviewCoachDashboard />
-          }
+            path: "/report",
+            element: <ReportsList />,
+          },
+          {
+            path: "/report/:id",
+            element: <InterviewCoachDashboard />,
+          },
         ],
       },
     ],
@@ -42,9 +47,7 @@ const router = createBrowserRouter([
 ]);
 
 createRoot(document.getElementById("root")).render(
-  // <StrictMode>
   <UserProvider>
     <RouterProvider router={router} />
   </UserProvider>,
-  // </StrictMode>,
 );
