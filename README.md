@@ -1,4 +1,4 @@
-# 🎯 AI Resume Analyzer & Interview Strategy Builder
+# 🎯 AI Resume Analyzer 
 
 A full-stack MERN application that uses **Google Gemini AI** to analyze your resume against a job description and generate a personalized interview preparation strategy.
 
